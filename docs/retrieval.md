@@ -23,7 +23,7 @@ The revision increments once for each nonempty successful upsert batch and once 
 | Returned results `k` | 1 to 100 |
 | Candidates per branch | `k` to 200 |
 | Rank constant | 1 to 1,000,000, default 60 |
-| Branch weight | Finite, greater than zero, at most 1,000,000 |
+| Branch weight | Finite, greater than zero, at most 1,000,000; contributions must not underflow |
 | Documents per atomic upsert / delete IDs | 1,000 |
 | Prepared upsert data | 16 MiB per batch |
 | Document text | 64 KiB UTF-8, nonblank |

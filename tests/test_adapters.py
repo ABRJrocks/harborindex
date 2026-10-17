@@ -209,11 +209,12 @@ class AdapterTests(unittest.TestCase):
 
     def test_unsupported_schema_and_wal_are_rejected(self):
         Index.create(self.path).close()
-        with sqlite3.connect(self.path) as db:
+        with contextlib.closing(sqlite3.connect(self.path)) as db:
             db.execute("UPDATE harbor_meta SET version=2")
+            db.commit()
         with self.assertRaisesRegex(HarborError, "schema"):
             Index.open(self.path)
-        with sqlite3.connect(self.path) as db:
+        with contextlib.closing(sqlite3.connect(self.path)) as db:
             db.execute("UPDATE harbor_meta SET version=1")
             db.commit()
             self.assertEqual(db.execute("PRAGMA journal_mode=WAL").fetchone()[0], "wal")
