@@ -1,0 +1,7 @@
+include LICENSE README.md CHANGELOG.md CONTRIBUTING.md SECURITY.md
+recursive-include docs *.md *.png
+recursive-include examples *.py *.json *.jsonl
+recursive-include src/harborindex *.html
+recursive-include tests *.py *.js *.json
+prune tests/browser/node_modules
+prune tests/browser/test-results
