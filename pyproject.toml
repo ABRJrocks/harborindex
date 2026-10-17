@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "harborindex"
+version = "0.1.0"
+description = "Inspectable hybrid retrieval for local Python applications using SQLite FTS5, cosine search and reciprocal rank fusion"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{name = "Abdul Rafay"}]
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/ABRJrocks/harborindex"
+Issues = "https://github.com/ABRJrocks/harborindex/issues"
+
+[project.scripts]
+harborindex = "harborindex.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+harborindex = ["*.html"]
+
+[tool.ruff]
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
