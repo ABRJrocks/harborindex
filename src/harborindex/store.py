@@ -105,7 +105,7 @@ class Store:
             if self._db.in_transaction: self._db.rollback()
             raise
 
-    def upsert(self,namespace_name,documents):
+    def upsert(self,namespace_name,documents,*,model=None):
         namespace(namespace_name)
         rows=[]
         size=0
@@ -118,6 +118,10 @@ class Store:
             size+=sum(len(value.encode()) if isinstance(value,str) else len(value or b'') for value in row)
             require(size<=MAX_BATCH_BYTES,'Batch exceeds 16 MiB')
             rows.append(row)
+        if model is not None:
+            require(model==self.model,'Ingest model label does not match the index')
+        if any(row[4] is not None for row in rows):
+            require(model==self.model,'Supply the matching model label when indexing vectors')
         with self._transaction(write=True):
             for document_id,title,body,meta,vector in rows:
                 existing=self._db.execute('SELECT rowid FROM harbor_documents WHERE namespace=? AND id=?',

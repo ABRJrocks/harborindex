@@ -39,8 +39,16 @@ def fuse(lexical,dense,*,rank_constant=60,lexical_weight=1.0,dense_weight=1.0):
     scores={}
     components={}
     for name,ranking in (('lexical',lexical),('dense',dense)):
+        require(isinstance(ranking,(list,tuple)) and len(ranking)<=200,'Candidate pools must contain at most 200 pairs')
         seen=set()
         for rank,(document_id,raw_score) in enumerate(ranking,1):
+            text(document_id,'Candidate ID',256)
+            require(type(raw_score) in (int,float),'Candidate raw scores must be numeric')
+            try:
+                finite=math.isfinite(raw_score)
+            except OverflowError:
+                finite=False
+            require(finite,'Candidate raw scores must be finite')
             require(document_id not in seen,'A candidate pool repeats a document ID')
             seen.add(document_id)
             contribution=weights[name]/(rank_constant+rank)

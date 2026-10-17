@@ -25,7 +25,13 @@ class IndexTests(unittest.TestCase):
             Document('b','restore database backup','Recovery plan',{'team':'data'},[0,1,0]),
             Document('c','route traffic to canary','Routing change',{'team':'platform'},[0,0,1]),
             Document('d','credentials used for database jobs','Job credentials',{'team':'data'},[.7,.7,0]),
-        ])
+        ],model='test-v1')
+
+    def test_ingest_model_must_be_explicit_and_match(self):
+        for model in (None,'wrong-model'):
+            with self.subTest(model=model),self.assertRaises(HarborError):
+                self.index.upsert('docs',[Document('a','text',vector=[1,0,0])],model=model)
+        self.assertEqual(self.index.stats('docs')['documents'],0)
 
     def test_exact_dense_and_lexical_search(self):
         self.seed()
@@ -49,7 +55,7 @@ class IndexTests(unittest.TestCase):
 
     def test_namespace_and_filters_apply_before_candidate_limit(self):
         self.seed()
-        self.index.upsert('other',[Document('a','credentials credentials credentials',vector=[1,0,0])])
+        self.index.upsert('other',[Document('a','credentials credentials credentials',vector=[1,0,0])],model='test-v1')
         for mode in ('lexical','dense','hybrid'):
             kwargs={'query':'credentials'} if mode!='dense' else {}
             if mode!='lexical':kwargs.update(vector=[1,0,0],model='test-v1')
@@ -61,7 +67,7 @@ class IndexTests(unittest.TestCase):
 
     def test_upsert_replaces_text_vector_and_metadata_together(self):
         self.seed()
-        self.index.upsert('docs',[Document('a','new uniquephrase',metadata={'team':'changed'},vector=[0,0,1])])
+        self.index.upsert('docs',[Document('a','new uniquephrase',metadata={'team':'changed'},vector=[0,0,1])],model='test-v1')
         self.assertEqual(self.index.search('docs',mode='lexical',query='rotate').hits,[])
         hit=self.index.search('docs',mode='lexical',query='uniquephrase').hits[0]
         self.assertEqual(hit.metadata,{'team':'changed'})
@@ -130,7 +136,7 @@ class IndexTests(unittest.TestCase):
             with self.assertRaises(HarborError):index.upsert('docs',[Document('b','test',vector=[1])])
 
     def test_same_score_ties_are_deterministic(self):
-        self.index.upsert('docs',[Document(name,'same',vector=[1,0,0]) for name in ('z','a','m')])
+        self.index.upsert('docs',[Document(name,'same',vector=[1,0,0]) for name in ('z','a','m')],model='test-v1')
         for mode in ('lexical','dense','hybrid'):
             kwargs={'query':'same'} if mode!='dense' else {}
             if mode!='lexical':kwargs.update(vector=[1,0,0],model='test-v1')
@@ -154,7 +160,7 @@ class ArithmeticTests(unittest.TestCase):
     def test_malformed_vectors_and_metadata_are_rejected(self):
         with Index.create(':memory:',dimensions=3,model='test') as index:
             for vector in ([True,0,1],[float('nan'),0,1],[float('inf'),0,1],[0,0,0]):
-                with self.subTest(vector=vector),self.assertRaises(HarborError):index.upsert('docs',[Document('a','text',vector=vector)])
+                with self.subTest(vector=vector),self.assertRaises(HarborError):index.upsert('docs',[Document('a','text',vector=vector)],model='test')
             for meta in ({'x':0},{'x':{}},{'bad.key':'v'},{'x':'\ud800'}):
                 with self.subTest(meta=meta),self.assertRaises(HarborError):index.upsert('docs',[Document('a','text',metadata=meta)])
 
