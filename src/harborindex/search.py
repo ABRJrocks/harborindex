@@ -31,6 +31,10 @@ class SearchResult:
     dense_candidates: int
     vectors_scanned: int
     rank_constant: int | None
+    revision: int
+    model: str | None
+    filters: dict
+    weights: dict | None
 
 
 def fuse(lexical,dense,*,rank_constant=60,lexical_weight=1.0,dense_weight=1.0):
@@ -41,7 +45,9 @@ def fuse(lexical,dense,*,rank_constant=60,lexical_weight=1.0,dense_weight=1.0):
     for name,ranking in (('lexical',lexical),('dense',dense)):
         require(isinstance(ranking,(list,tuple)) and len(ranking)<=200,'Candidate pools must contain at most 200 pairs')
         seen=set()
-        for rank,(document_id,raw_score) in enumerate(ranking,1):
+        for rank,pair in enumerate(ranking,1):
+            require(isinstance(pair,(list,tuple)) and len(pair)==2,'Candidates must be ID and raw-score pairs')
+            document_id,raw_score=pair
             text(document_id,'Candidate ID',256)
             require(type(raw_score) in (int,float),'Candidate raw scores must be numeric')
             try:
@@ -86,6 +92,7 @@ class Index(Store):
             scope+=' AND json_extract(d.metadata,?)=?'
             parameters.extend(('$.'+key,value))
         with self._transaction():
+            revision=self._db.execute('SELECT revision FROM harbor_meta WHERE singleton=1').fetchone()[0]
             lexical=[]
             if match is not None:
                 lexical=[(row['id'],row['score']) for row in self._db.execute(
@@ -115,4 +122,5 @@ class Index(Store):
             require(len(documents)==len(selected),'Candidate document is missing from the index')
             hits=[Hit(**documents[document_id],rank=rank,score=scores[document_id],components=components[document_id]) for rank,document_id in enumerate(selected,1)]
         return SearchResult(hits,mode,score_kind,namespace_name,candidate_limit,len(lexical),len(dense),count,
-                            rank_constant if mode=='hybrid' else None)
+                            rank_constant if mode=='hybrid' else None,revision,self.model,filters,
+                            {'lexical':float(lexical_weight),'dense':float(dense_weight)} if mode=='hybrid' else None)

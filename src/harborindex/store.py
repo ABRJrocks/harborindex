@@ -9,7 +9,7 @@ import sqlite3
 from .validation import MAX_BATCH_BYTES, HarborError, integer, namespace, prepare, require, text
 
 SCHEMA = (
-    'CREATE TABLE harbor_meta(singleton INTEGER PRIMARY KEY CHECK(singleton=1), version INTEGER NOT NULL, dimensions INTEGER, model TEXT)',
+    'CREATE TABLE harbor_meta(singleton INTEGER PRIMARY KEY CHECK(singleton=1), version INTEGER NOT NULL, dimensions INTEGER, model TEXT, revision INTEGER NOT NULL DEFAULT 0)',
     '''CREATE TABLE harbor_documents(
         rowid INTEGER PRIMARY KEY, namespace TEXT NOT NULL, id TEXT NOT NULL,
         title TEXT NOT NULL, text TEXT NOT NULL, metadata TEXT NOT NULL,
@@ -72,7 +72,7 @@ class Store:
         try:
             db.execute('BEGIN IMMEDIATE')
             for statement in SCHEMA: db.execute(statement)
-            db.execute('INSERT INTO harbor_meta VALUES(1,1,?,?)',(dimensions,model))
+            db.execute('INSERT INTO harbor_meta(singleton,version,dimensions,model) VALUES(1,1,?,?)',(dimensions,model))
             db.commit()
         except BaseException:
             if db.in_transaction: db.rollback()
@@ -135,6 +135,7 @@ class Store:
                     rowid=self._db.execute('INSERT INTO harbor_documents(namespace,id,title,text,metadata,vector) VALUES(?,?,?,?,?,?)',
                                            (namespace_name,document_id,title,body,meta,vector)).lastrowid
                 self._db.execute('INSERT INTO harbor_fts(rowid,title,text) VALUES(?,?,?)',(rowid,title,body))
+            if rows: self._db.execute('UPDATE harbor_meta SET revision=revision+1 WHERE singleton=1')
         return len(rows)
 
     def delete(self,namespace_name,ids):
@@ -152,6 +153,7 @@ class Store:
                     self._db.execute('DELETE FROM harbor_fts WHERE rowid=?',(row[0],))
                     self._db.execute('DELETE FROM harbor_documents WHERE rowid=?',(row[0],))
                     count+=1
+            if count: self._db.execute('UPDATE harbor_meta SET revision=revision+1 WHERE singleton=1')
         return count
 
     def stats(self,namespace_name):
