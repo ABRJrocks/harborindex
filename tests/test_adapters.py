@@ -78,7 +78,7 @@ class AdapterTests(unittest.TestCase):
             )[0],
             0,
         )
-        self.assertIn("Recorded retrieval snapshot", report.read_text())
+        self.assertIn("Recorded retrieval snapshot", report.read_text(encoding="utf-8"))
         self.assertEqual(json.loads(self.cli("stats", *args)[1])["documents"], 9)
         self.assertEqual(
             json.loads(self.cli("delete", *args, "key-rotation")[1])["deleted"], 1
@@ -108,6 +108,7 @@ class AdapterTests(unittest.TestCase):
             '{"x":1,"x":2}',
             "[NaN]",
             "[Infinity]",
+            "[1e999]",
             "[" * 2000 + "0" + "]" * 2000,
             b"\xff",
         ):
@@ -146,7 +147,7 @@ class AdapterTests(unittest.TestCase):
         write_report(output, report)
         with self.assertRaises(FileExistsError):
             write_report(output, run_demo())
-        self.assertEqual(output.read_text(), html)
+        self.assertEqual(output.read_text(encoding="utf-8"), html)
 
     def test_report_rejects_changes_between_search_snapshots(self):
         with Index.create(":memory:", dimensions=3, model=MODEL) as index:
