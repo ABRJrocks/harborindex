@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Credential rotation",
+    "query": "rotate service credentials",
+    "vector": [
+      1,
+      0,
+      0
+    ],
+    "where": {
+      "team": "platform"
+    }
+  },
+  {
+    "name": "Database recovery",
+    "query": "restore database backup",
+    "vector": [
+      0,
+      1,
+      0
+    ],
+    "where": {
+      "team": "data"
+    }
+  },
+  {
+    "name": "Traffic routing",
+    "query": "switch traffic canary",
+    "vector": [
+      0,
+      0,
+      1
+    ],
+    "where": {
+      "team": "platform"
+    }
+  }
+]

@@ -1,6 +1,7 @@
 """Bounded JSON input with duplicate-key and non-finite number rejection."""
 
 import json
+import math
 from pathlib import Path
 
 from .validation import MAX_BATCH_BYTES, Document, HarborError, require
@@ -27,6 +28,8 @@ def loads(value):
     while pending:
         node, depth = pending.pop()
         require(depth <= 32, "JSON nesting exceeds 32 levels")
+        if isinstance(node, float):
+            require(math.isfinite(node), "JSON numbers must be finite")
         if isinstance(node, (dict, list)):
             children = node.values() if isinstance(node, dict) else node
             pending.extend((child, depth + 1) for child in children)
