@@ -273,6 +273,8 @@ class ArithmeticTests(unittest.TestCase):
         self.assertEqual(parts["a"]["lexical"]["rank"], 1)
         with self.assertRaises(HarborError):
             fuse([("a", 0), ("a", 0)], [])
+        with self.assertRaisesRegex(HarborError, "too small"):
+            fuse([("a", 0)], [], lexical_weight=5e-324)
 
     def test_large_and_tiny_finite_vectors_do_not_overflow(self):
         for vector in ([1e308, 1e308, 0], [1e-300, 1e-300, 0]):

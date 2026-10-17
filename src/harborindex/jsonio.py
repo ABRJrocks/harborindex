@@ -22,7 +22,9 @@ def _constant(value):
 def loads(value):
     try:
         result = json.loads(value, object_pairs_hook=_pairs, parse_constant=_constant)
-    except (json.JSONDecodeError, UnicodeError, RecursionError) as error:
+    except HarborError:
+        raise
+    except (ValueError, UnicodeError, RecursionError) as error:
         raise HarborError("Invalid JSON input") from error
     pending = [(result, 0)]
     while pending:

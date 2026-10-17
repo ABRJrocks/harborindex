@@ -80,6 +80,10 @@ def fuse(lexical, dense, *, rank_constant=60, lexical_weight=1.0, dense_weight=1
             require(document_id not in seen, "A candidate pool repeats a document ID")
             seen.add(document_id)
             contribution = weights[name] / (rank_constant + rank)
+            require(
+                contribution > 0,
+                "Weight is too small for a representable rank contribution",
+            )
             scores[document_id] = scores.get(document_id, 0.0) + contribution
             components.setdefault(document_id, {})[name] = {
                 "rank": rank,
